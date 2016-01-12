@@ -45,6 +45,8 @@ var getImage = function(comicPage, chapterNo){
 var crawlPages = function(chapterLink, chapterNo){
     config.httpOptions.path = "/" + chapterLink;
     var comicPage = '';
+    var continueCrawl = true;
+
     var req = http.request(config.httpOptions, function (res) {
         res.on('data', function (chunk) {
             comicPage += chunk;
@@ -52,8 +54,25 @@ var crawlPages = function(chapterLink, chapterNo){
         res.on('end', function(){
             getImage(comicPage, chapterNo)
         });
-    });
-    req.end();
+
+        // Check if next page exists
+        jsdom.env(comicPage, config.fileConfig.scripts, function(err, window){
+            if (err != null) {
+                console.err('Error parsing the response !');
+            } else {
+                var $ = window.$;
+                if ($('a:contains("Next page")').length > 0) {
+                    $('a:contains("Next page")').each(function(){
+                        config.httpOptions.path = "/" + $(this).attr('href'); 
+                        return false;
+                    });    
+                } else {
+                    continueCrawl = false;
+                }
+                
+            }
+        });
+    }).end();
 }
 
 var crawlChapters = function(){
@@ -101,6 +120,6 @@ var getComics = function(){
         });
 
         res.on('end', getChapters);
-    });
-    req.end();
+    }).end();
+    
 }();
