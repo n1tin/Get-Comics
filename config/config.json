@@ -1,0 +1,14 @@
+{
+	"httpOptions" : {
+    	"hostname": "www.comicastle.org",
+    	"path": "/manga-the-dark-knight-strikes-again.html",
+    	"method": "GET"
+	},
+	"fileConfig" : {
+		"folderPath" : "C://Comics",
+		"fileName" : "The_DarK_Knight_Strikes_Again",
+		"comicName" : "The Dark Knight Strikes Again",
+		"scripts" : ["http://code.jquery.com/jquery-1.5.min.js"],
+		"imgClassName" : "chapter-img"
+	}
+}
