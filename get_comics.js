@@ -12,11 +12,13 @@ var comicBookLinks = [];
 var dir = path.join(config.fileConfig.folderPath, config.fileConfig.comicName);
 
 var saveComicStrip = function(src, chapterNo){
-    var arr = src.split('/');
+   var arr = src.split('/');
     var filename = arr[arr.length - 1];
     var req = http.get(src, function (res) {
-        var image = fs.createWriteStream(dir + "/Chapter " + chapterNo + "/" + filename);
-        image.on('open', function(fd){
+        var filePath = path.join(dir + "/Chapter " + chapterNo, filename);
+        var image = fs.createWriteStream(filePath.trim());
+       
+        image.on('open', function(){
             res.on('data', function (chunk) {
                 image.write(chunk);
             });
@@ -24,7 +26,6 @@ var saveComicStrip = function(src, chapterNo){
                 image.end();
             });
         });
-        
     }).end();
 }
 
@@ -33,7 +34,6 @@ var crawlPages = function(chapterLink, chapterNo){
     config.httpOptions.path = "/" + chapterLink;
     var comicPage = '';
     var req;
-    var i = 0;
     req = http.request(config.httpOptions, function (res) {
         console.log(config.httpOptions);
         res.on('data', function (chunk) {
@@ -41,50 +41,24 @@ var crawlPages = function(chapterLink, chapterNo){
         });
         res.on('end', function(){
             jsdom.env(comicPage, config.fileConfig.scripts, function(err, window){
-                console.log('here');
                 if (err != null) {
                     console.err('Error parsing the response !');
                 } else {
                     var $ = window.$;
                     var src = ''
-                    console.log('here1');
-                    console.log(comicPage.length);
                     // Save the comic strip
                     $('img.chapter-img').each(function(){
                         src =  $(this).attr('src');
-                        console.log(src);
-                        console.log('folderNo ' + chapterNo);
-                        //saveComicStrip(src, chapterNo);
-                        var arr = src.split('/');
-                        var filename = arr[arr.length - 1];
-                        var req = http.get(src, function (res) {
-                            console.log(filename);
-                            var filePath = path.join(dir + "/Chapter " + chapterNo, filename);
-                            console.log(filePath);
-                            var image = fs.createWriteStream(filePath);
-                           
-                            image.on('open', function(){
-                                //res.pipe(image);
-                                res.on('data', function (chunk) {
-                                    image.write(chunk);
-                                });
-                                res.on('end', function(){
-                                    image.end();
-                                });
-                                
-                                //image.on('finish', function(){
-                                    // Check if next page exists
-                                /*  if ($('a:contains("Next page")').length > 0) {
-                                    var nextLink = '';
-                                    $('a:contains("Next page")').each(function(){
-                                        nextLink = $(this).attr('href');
-                                    });
-                                    console.log(nextLink);
-                                    crawlPages(nextLink, chapterNo);
-                                }*/
-                            });
-                        }).end();
+                        saveComicStrip(src, chapterNo);
                     });
+
+                    if ($('a:contains("Next page")').length > 0) {
+                        var nextLink = '';
+                        $('a:contains("Next page")').each(function(){
+                            nextLink = $(this).attr('href');
+                        });
+                        crawlPages(nextLink, chapterNo);
+                    }
                 }
             });
 
@@ -126,11 +100,9 @@ var getChapters = function(){
                 }
             });
         }
-
         crawlChapters();
     });
-
-};
+}
 
 var pageData = '';
 var getComics = function(){
