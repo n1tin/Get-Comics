@@ -15,13 +15,14 @@ var saveComicStrip = function(src, chapterNo){
     var arr = src.split('/');
     var filename = arr[arr.length - 1];
     var req = http.get(src, function (res) {
-        var image = fs.createWriteStream(dir+"/Chapter "+chapterNo+"/temp.jpg");
-        res.on('data', function (chunk) {
-            image.write(chunk);
-        });
-
-        res.on('end', function(){
-           image.end();
+        var image = fs.createWriteStream(dir + "/Chapter " + chapterNo + "/" + filename);
+        image.on('open', function(fd){
+            res.on('data', function (chunk) {
+                image.write(chunk);
+            });
+            res.on('end', function(){
+                image.end();
+            });
         });
         
     }).end();
